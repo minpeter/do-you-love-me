@@ -20,4 +20,13 @@ async function loadBuiltinPresets(): Promise<PresetManifest[]> {
   return presets;
 }
 
-export const BUILTIN_PRESETS: PresetManifest[] = await loadBuiltinPresets();
+let builtinPresetsCache: PresetManifest[] | null = null;
+
+export async function getBuiltinPresets(): Promise<PresetManifest[]> {
+  if (builtinPresetsCache) {
+    return builtinPresetsCache;
+  }
+
+  builtinPresetsCache = await loadBuiltinPresets();
+  return builtinPresetsCache;
+}

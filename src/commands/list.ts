@@ -3,7 +3,7 @@ import pc from 'picocolors';
 import { resolveOpenClawPaths } from '../core/config-path';
 import { listPresets } from '../core/preset-loader';
 import type { PresetManifest } from '../core/types';
-import { BUILTIN_PRESETS } from '../presets/index';
+import { getBuiltinPresets } from '../presets/index';
 
 interface ListOptions {
   json?: boolean;
@@ -18,7 +18,7 @@ function toOutputPreset(preset: PresetManifest): PresetManifest {
 
 export async function listCommand(options: ListOptions = {}): Promise<void> {
   const paths = await resolveOpenClawPaths();
-  const presets = await listPresets(paths.presetsDir, BUILTIN_PRESETS);
+  const presets = await listPresets(paths.presetsDir, await getBuiltinPresets());
 
   if (options.json) {
     console.log(JSON.stringify(presets.map(toOutputPreset), null, 2));

@@ -11,7 +11,7 @@ import { deepMerge } from '../core/merge';
 import { loadPreset } from '../core/preset-loader';
 import { filterSensitiveFields } from '../core/sensitive-filter';
 import { copyWorkspaceFiles, listWorkspaceFiles, resolveWorkspaceDir } from '../core/workspace';
-import { BUILTIN_PRESETS } from '../presets/index';
+import { getBuiltinPresets } from '../presets/index';
 import type { PresetManifest } from '../core/types';
 
 interface ApplyOptions {
@@ -39,7 +39,7 @@ export async function applyCommand(presetName: string, options: ApplyOptions = {
     preset = await loadPreset(userPresetPath);
     presetDir = userPresetPath;
   } catch {
-    const builtinPreset = BUILTIN_PRESETS.find((candidate) => candidate.name === presetName);
+    const builtinPreset = (await getBuiltinPresets()).find((candidate) => candidate.name === presetName);
     if (!builtinPreset) {
       throw new Error(
         `Preset '${presetName}' not found. Run 'oh-my-openclaw list' to see available presets.`,

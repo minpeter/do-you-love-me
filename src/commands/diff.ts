@@ -1,10 +1,10 @@
 import pc from 'picocolors';
 import path from 'node:path';
-import { resolveOpenClawPaths } from '../core/config-path.ts';
-import { readJson5 } from '../core/json5-utils.ts';
-import { resolveWorkspaceDir, listWorkspaceFiles } from '../core/workspace.ts';
-import { loadPreset } from '../core/preset-loader.ts';
-import { BUILTIN_PRESETS } from '../presets/index.ts';
+import { resolveOpenClawPaths } from '../core/config-path';
+import { readJson5 } from '../core/json5-utils';
+import { resolveWorkspaceDir, listWorkspaceFiles } from '../core/workspace';
+import { loadPreset } from '../core/preset-loader';
+import { getBuiltinPresets } from '../presets/index';
 
 interface DiffOptions {
   json?: boolean;
@@ -75,7 +75,7 @@ export async function diffCommand(presetName: string, options: DiffOptions = {})
   try {
     preset = await loadPreset(userPresetPath);
   } catch {
-    const builtin = BUILTIN_PRESETS.find(p => p.name === presetName);
+    const builtin = (await getBuiltinPresets()).find(p => p.name === presetName);
     if (!builtin) {
       throw new Error(`Preset '${presetName}' not found.`);
     }
