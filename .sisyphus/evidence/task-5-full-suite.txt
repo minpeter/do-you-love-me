@@ -1,0 +1,10 @@
+Warning: JSON5 comments in your config will be lost (known MVP limitation).
+OK Workspace files copied: AGENTS.md, SOUL.md
+
+OK Preset 'researcher' applied.
+Run 'openclaw gateway restart' to activate changes.
+
+ 135 pass
+ 0 fail
+ 263 expect() calls
+Ran 135 tests across 16 files. [8.84s]

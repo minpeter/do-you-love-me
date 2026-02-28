@@ -441,3 +441,105 @@ describe('applyCommand', () => {
     expect((config.identity as Record<string, unknown>).theme).toBe('all-in-one power assistant');
   });
 });
+
+describe('remote apply', () => {
+  test('applies remote preset via owner/repo shorthand', async () => {
+    const env = await createTempEnv('openclaw-apply-remote-shorthand-');
+
+    await writeConfig(env.configPath, { identity: { name: 'BaseBot' } });
+
+    await applyCommand('minpeter/demo-researcher', { noBackup: true });
+
+    // Should have cached the preset
+    const cachePath = path.join(env.presetsDir, 'minpeter--demo-researcher');
+    expect(await fileExists(cachePath)).toBe(true);
+
+    // Should have applied config (researcher preset has config changes)
+    const config = await readConfig(env.configPath);
+    expect(config).not.toEqual({ identity: { name: 'BaseBot' } }); // config changed
+
+    // Should have copied workspace files (researcher has AGENTS.md, SOUL.md)
+    expect(await fileExists(path.join(env.workspaceDir, 'AGENTS.md'))).toBe(true);
+  }, 60_000);
+
+  test('applies remote preset via full GitHub URL', async () => {
+    const env = await createTempEnv('openclaw-apply-remote-url-');
+
+    await writeConfig(env.configPath, { identity: { name: 'BaseBot' } });
+
+    await applyCommand('https://github.com/minpeter/demo-researcher', { noBackup: true });
+
+    const cachePath = path.join(env.presetsDir, 'minpeter--demo-researcher');
+    expect(await fileExists(cachePath)).toBe(true);
+  }, 60_000);
+
+  test('uses cached preset on second apply (no re-download)', async () => {
+    const env = await createTempEnv('openclaw-apply-remote-cached-');
+
+    await writeConfig(env.configPath, { identity: { name: 'BaseBot' } });
+
+    // First apply — clones
+    await applyCommand('minpeter/demo-researcher', { noBackup: true });
+
+    // Second apply — should use cache
+    const logs = await captureLogs(async () => {
+      await applyCommand('minpeter/demo-researcher', { noBackup: true });
+    });
+
+    const combined = logs.join('\n');
+    expect(combined).toContain('cached');
+  }, 60_000);
+
+  test('--force re-downloads cached preset', async () => {
+    const env = await createTempEnv('openclaw-apply-remote-force-');
+
+    await writeConfig(env.configPath, { identity: { name: 'BaseBot' } });
+
+    // First apply — clone
+    await applyCommand('minpeter/demo-researcher', { noBackup: true });
+
+    // Force re-download — no "cached" message
+    const logs = await captureLogs(async () => {
+      await applyCommand('minpeter/demo-researcher', { noBackup: true, force: true });
+    });
+
+    const combined = logs.join('\n');
+    expect(combined).not.toContain('Using cached');
+    
+    // Should still work after force re-download
+    const cachePath = path.join(env.presetsDir, 'minpeter--demo-researcher');
+    expect(await fileExists(cachePath)).toBe(true);
+  }, 60_000);
+
+  test('--dry-run with remote preset shows changes without applying', async () => {
+    const env = await createTempEnv('openclaw-apply-remote-dry-');
+
+    const originalConfig = { identity: { name: 'DryBaseBot' } };
+    await writeConfig(env.configPath, originalConfig);
+
+    const logs = await captureLogs(async () => {
+      await applyCommand('minpeter/demo-researcher', { dryRun: true, noBackup: true });
+    });
+
+    // Config should NOT be changed (dry-run)
+    const config = await readConfig(env.configPath);
+    expect(config).toEqual(originalConfig);
+
+    // No workspace files copied (dry-run)
+    expect(await fileExists(path.join(env.workspaceDir, 'AGENTS.md'))).toBe(false);
+
+    // Dry-run output shown
+    const combined = logs.join('\n');
+    expect(combined).toContain('DRY RUN');
+  }, 60_000);
+
+  test('throws on non-existent remote repository', async () => {
+    const env = await createTempEnv('openclaw-apply-remote-notfound-');
+
+    await writeConfig(env.configPath, { identity: { name: 'BaseBot' } });
+
+    await expect(
+      applyCommand('nonexistent-owner-xyz-abc/nonexistent-repo-xyz-abc', { noBackup: true }),
+    ).rejects.toThrow(/Failed to clone/);
+  }, 60_000);
+});

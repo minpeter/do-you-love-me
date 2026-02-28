@@ -40,12 +40,14 @@ program
   .option('--dry-run', 'Show what would change without applying')
   .option('--no-backup', 'Skip creating a backup (use with caution)')
   .option('--clean', 'Remove existing config and workspace files before applying (clean install)')
-  .action(async (preset: string, options: { dryRun?: boolean; backup?: boolean; clean?: boolean }) => {
+  .option('--force', 'Re-download remote preset even if cached')
+  .action(async (preset: string, options: { dryRun?: boolean; backup?: boolean; clean?: boolean; force?: boolean }) => {
     try {
       await applyCommand(preset, {
         dryRun: options.dryRun,
         noBackup: !options.backup,
         clean: options.clean,
+        force: options.force,
       });
     } catch (err) {
       console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);

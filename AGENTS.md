@@ -18,6 +18,7 @@ oh-my-openclaw/
 │   ├── commands/            # list, apply, export, diff, install implementations
 │   │   └── __tests__/       # Command-level tests
 │   ├── core/                # Shared logic (merge, backup, filter, config resolution)
+│   │   ├── remote.ts         # GitHub URL parsing, clone, and cache logic
 │   │   └── __tests__/       # Unit tests per core module
 │   └── presets/             # Built-in preset templates
 │       ├── index.ts         # Loads + caches built-in presets
@@ -34,6 +35,7 @@ oh-my-openclaw/
 | Change merge behavior | `src/core/merge.ts` | Deep merge with null-delete semantics |
 | Modify sensitive field filtering | `src/core/sensitive-filter.ts` | Glob-pattern matching on key paths |
 | Change config path resolution | `src/core/config-path.ts` | Env var overrides: `OPENCLAW_CONFIG_PATH` > `OPENCLAW_STATE_DIR` > `~/.openclaw/` |
+| Apply remote GitHub presets | `src/core/remote.ts` | `isGitHubRef()`, `parseGitHubRef()`, `cloneToCache()` |
 | Add workspace file types | `src/core/constants.ts` | `WORKSPACE_FILES` array |
 | Add built-in presets | `src/presets/` | Built-in is apex-only; use user presets (`~/.openclaw/oh-my-openclaw/presets/<name>/`) for sharing custom variants |
 | Understand backup flow | `src/core/backup.ts` | Timestamped copies to `~/.openclaw/oh-my-openclaw/backups/` |
@@ -66,6 +68,7 @@ Inputs are never mutated — always returns new object.
 
 ## PRESET RESOLUTION ORDER
 
+0. Remote GitHub presets: if input matches `owner/repo` or GitHub URL → `isGitHubRef()` → clone → cache as user preset
 1. User presets: `~/.openclaw/oh-my-openclaw/presets/<name>/`
 2. Built-in presets: `src/presets/<name>/`
 3. User presets with same name **override** built-ins.
@@ -79,6 +82,7 @@ This repo manages exactly **ONE** built-in preset: **apex**.
 - Other presets can be shared as user presets (e.g., `minpeter/demo-assistant`)
 - User presets go to `~/.openclaw/oh-my-openclaw/presets/<name>/`
 - Use `oh-my-openclaw install` to apply apex in one command
+- Remote presets can be applied directly from GitHub: `oh-my-openclaw apply owner/repo` or `oh-my-openclaw apply https://github.com/owner/repo`. They are cached as user presets at `~/.openclaw/oh-my-openclaw/presets/owner--repo/`. Use `--force` to re-download.
 
 ## ANTI-PATTERNS
 

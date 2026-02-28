@@ -25,6 +25,7 @@ Prerequisites: [Bun](https://bun.sh)
 1. **List** available presets: `oh-my-openclaw list`
 2. **Diff** a preset against your current config: `oh-my-openclaw diff apex`
 3. **Apply** the preset: `oh-my-openclaw apply apex`
+6. **Apply** a preset from GitHub: `oh-my-openclaw apply minpeter/demo-researcher`
 4. **Install** apex quickly: `oh-my-openclaw install`
 5. **Export** your current setup as a new preset: `oh-my-openclaw export my-custom-setup`
 
@@ -45,7 +46,7 @@ Available presets:
 ```
 
 ### apply
-Applies a preset to your OpenClaw configuration. It merges the preset's JSON config into your `openclaw.json` and copies any bundled workspace files (like `AGENTS.md`) to your `.openclaw` directory.
+Applies a preset to your OpenClaw configuration. It merges the preset's JSON config into your `openclaw.json` and copies any bundled workspace files (like `AGENTS.md`) to your `.openclaw` directory. The `<preset>` argument can be a local preset name, a GitHub shorthand (`owner/repo`), or a full GitHub URL (`https://github.com/owner/repo`).
 ```bash
 oh-my-openclaw apply <preset> [options]
 ```
@@ -54,6 +55,7 @@ oh-my-openclaw apply <preset> [options]
   - `--dry-run`: Show what would change without making any modifications.
   - `--no-backup`: Skip creating a backup of your current configuration (default: backups are created).
   - `--clean`: Remove existing config and workspace files before applying (clean install).
+  - `--force`: Re-download a remote preset even if it's already cached locally.
 
 ### install
 Installs the apex preset (shortcut for `apply apex`).
@@ -128,6 +130,27 @@ Presets are stored in `~/.openclaw/oh-my-openclaw/`. You can create them manuall
   workspaceFiles: ["AGENTS.md"]
 }
 ```
+
+## Remote Presets
+
+You can apply presets directly from public GitHub repositories without any local setup.
+
+### Usage
+
+```bash
+# Apply by shorthand (owner/repo)
+oh-my-openclaw apply minpeter/demo-researcher
+
+# Apply by full GitHub URL
+oh-my-openclaw apply https://github.com/minpeter/demo-researcher
+
+# Force re-download (ignores local cache)
+oh-my-openclaw apply minpeter/demo-researcher --force
+```
+
+Remote presets are automatically cached as user presets at `~/.openclaw/oh-my-openclaw/presets/owner--repo/`. Subsequent applies reuse the cached version unless `--force` is specified.
+
+> **Note**: Only public GitHub repositories are supported. Private repos require authentication which is not currently supported.
 
 ## Development
 - **Prerequisites:** Bun
