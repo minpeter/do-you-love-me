@@ -33,7 +33,7 @@ describe('listCommand', () => {
     }
   });
 
-  test('lists built-in presets (4 entries) with expected fields', async () => {
+  test('lists built-in presets (5 entries) with expected fields', async () => {
     await listCommand();
 
     const combined = output.join('\n');
@@ -44,10 +44,10 @@ describe('listCommand', () => {
     expect(combined).toContain('[builtin]');
 
     const nameLines = output.filter((line) => /^\s{2}\S+ \[builtin\]$/.test(line));
-    expect(nameLines.length).toBe(4);
+    expect(nameLines.length).toBe(5);
 
     const versionLines = output.filter((line) => line.trimStart().startsWith('v'));
-    expect(versionLines.length).toBe(4);
+    expect(versionLines.length).toBe(5);
   });
 
   test('--json flag outputs valid JSON array', async () => {
@@ -55,7 +55,7 @@ describe('listCommand', () => {
 
     const json = JSON.parse(output.join('\n')) as Array<Record<string, unknown>>;
     expect(Array.isArray(json)).toBe(true);
-    expect(json).toHaveLength(4);
+    expect(json).toHaveLength(5);
 
     for (const preset of json) {
       expect(typeof preset.name).toBe('string');

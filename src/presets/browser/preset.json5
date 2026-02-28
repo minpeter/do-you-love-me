@@ -1,0 +1,26 @@
+{
+  name: 'browser',
+  description: 'Browser automation agent with agent-browser CLI for web interaction, scraping, and testing',
+  version: '1.0.0',
+  author: 'oh-my-openclaw',
+  tags: ['browser', 'automation', 'web', 'scraping'],
+  builtin: true,
+  config: {
+    identity: {
+      name: 'BrowserBot',
+      theme: 'browser automation agent',
+      emoji: '🌐',
+    },
+    agents: {
+      defaults: {
+        model: {
+          primary: 'anthropic/claude-sonnet-4-5',
+        },
+      },
+    },
+    tools: {
+      allow: ['exec', 'process', 'read', 'write', 'web_search'],
+    },
+  },
+  workspaceFiles: ['AGENTS.md', 'SOUL.md'],
+}
