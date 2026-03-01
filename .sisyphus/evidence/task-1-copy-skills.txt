@@ -1,0 +1,7 @@
+Command:
+bun -e 'import fs from "node:fs/promises"; import path from "node:path"; import os from "node:os"; const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "skills-copy-")); const homeDir = path.join(tmpRoot, "home"); const presetDir = path.join(tmpRoot, "preset"); await fs.mkdir(path.join(presetDir, "skills", "alpha", "scripts"), { recursive: true }); await fs.writeFile(path.join(presetDir, "skills", "alpha", "SKILL.md"), "# alpha\n"); await fs.writeFile(path.join(presetDir, "skills", "alpha", "scripts", "run.sh"), "echo alpha\n"); const originalHomedir = os.homedir; os.homedir = () => homeDir; const { copySkills } = await import("./src/core/skills.ts"); await copySkills(presetDir, ["alpha"]); os.homedir = originalHomedir; const installed = await fs.readFile(path.join(homeDir, ".agents", "skills", "alpha", "SKILL.md"), "utf8"); const nested = await fs.readFile(path.join(homeDir, ".agents", "skills", "alpha", "scripts", "run.sh"), "utf8"); console.log("VERIFY_SKILL_MD=" + installed.trim()); console.log("VERIFY_SCRIPT=" + nested.trim());'
+
+Output:
+OK Skill 'alpha' installed.
+VERIFY_SKILL_MD=# alpha
+VERIFY_SCRIPT=echo alpha

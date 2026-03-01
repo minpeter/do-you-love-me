@@ -1,0 +1,7 @@
+Command:
+bun -e 'import fs from "node:fs/promises"; import path from "node:path"; import os from "node:os"; const tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "skills-skip-")); const homeDir = path.join(tmpRoot, "home"); const presetDir = path.join(tmpRoot, "preset"); await fs.mkdir(path.join(presetDir, "skills", "beta"), { recursive: true }); await fs.writeFile(path.join(presetDir, "skills", "beta", "SKILL.md"), "# new-beta\n"); await fs.mkdir(path.join(homeDir, ".agents", "skills", "beta"), { recursive: true }); await fs.writeFile(path.join(homeDir, ".agents", "skills", "beta", "SKILL.md"), "# old-beta\n"); const originalHomedir = os.homedir; os.homedir = () => homeDir; const { copySkills } = await import("./src/core/skills.ts"); await copySkills(presetDir, ["beta"]); os.homedir = originalHomedir; const kept = await fs.readFile(path.join(homeDir, ".agents", "skills", "beta", "SKILL.md"), "utf8"); console.log("VERIFY_TARGET_CONTENT=" + kept.trim()); console.log("VERIFY_STDIN_TTY=" + String(process.stdin.isTTY));'
+
+Output:
+Skipped skill 'beta' (already exists. Use --force to overwrite).
+VERIFY_TARGET_CONTENT=# old-beta
+VERIFY_STDIN_TTY=undefined
