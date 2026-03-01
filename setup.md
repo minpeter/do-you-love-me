@@ -1,46 +1,152 @@
-# Openclaw Installation Prompt
+# Openclaw Setup Prompt
 
-Install Openclaw in the current directory so it's immediately ready to use.
+Set up Openclaw so it is immediately ready to use.
 
-1. Install Openclaw:
-   - `git clone https://github.com/openclaw/openclaw.git`
-   - Run `pnpm install`
-2. Install private-oh-my-openclaw:
-   - `git clone https://github.com/minpeter/private-oh-my-openclaw.git`
-   - Run `bun install`
-   - Run `bun run build:compile`
-   - Run `./dist/oh-my-openclaw apply developer`
-3. Immediately after installation, verify it works with the following commands:
-   - `openclaw --help`
-   - `oh-my-openclaw list`
-4. If a command fails (permissions/version/auth/PATH), automatically:
-   - Diagnose the cause,
-   - Apply a minimal fix,
-   - Retry,
-   - Report exactly what was changed.
-5. Messenger channel setup:
-   - Ask the user: "Which messenger do you use? If you have a bot token, please share it as well."
-   - If the user provides a token → Register it directly with `openclaw channels add`.
-   - If the user only answers with the messenger name and has no token → Guide them through the creation process step by step:
-     - Telegram: Message @BotFather with /newbot → Copy the token
-     - Discord: discord.com/developers → New Application → Create Bot → Copy the token → Invite to server
-     - WhatsApp: Only QR code connection is needed
-     - After each step, confirm "Have you completed this?" before proceeding to the next
-     → Once the token is received, register it with `openclaw channels add`.
-   - If the user doesn't use any messenger → Skip, and let them know they can add one later with `openclaw channels add`.
-6. AI model authentication:
-   - Inform the user of available AI providers:
-     - Anthropic (Claude), OpenAI, Google Gemini, Mistral, xAI (Grok)
-     - OpenRouter, KiloCode, Together, HuggingFace, Venice, Moonshot
-     - Ollama (local, free), Qwen (free OAuth tier)
-     - Free models via OpenRouter: DeepSeek-R1, Llama 3.3, Qwen VL, etc.
-     - Free models via KiloCode: GLM-5, MiniMax-M2.5, etc.
-     - GitHub Copilot tokens can also be used
-   - Ask: "Which AI provider and API key would you like to use? If you don't have one, I can recommend free options."
-   - If an API key is provided → Configure it with `openclaw onboard` or `openclaw config set`.
-   - If no API key is available → Recommend one of the free options (OpenRouter free models, Qwen OAuth, Ollama local) and guide the setup.
-7. Wrap-up:
-   - After installation is complete, guide the user on next steps:
-     - Provide the command to run the gateway with `openclaw gateway run`
-     - Send a test message from the registered messenger to verify the response
-     - If issues arise, diagnose with `openclaw status --deep`
+## Step 1 — Gather all required information upfront
+
+Before doing anything else, use the `AskUserQuestion` tool to collect everything needed in one shot.
+Ask all questions simultaneously in a single tool call:
+
+- **Messenger**: Which messenger do you use?
+  - Options: Telegram / Discord / WhatsApp / None
+- **Bot token**: Do you already have a bot token for that messenger? (Paste it here, or say "none")
+- **AI provider**: Which AI provider would you like to use?
+  - Options: Anthropic (Claude) / OpenAI / Google Gemini / Free option (OpenRouter, Ollama, etc.)
+- **API key**: Paste your API key, or type `env` if it is already set as an environment variable
+
+Do not proceed until the user has answered all questions.
+
+---
+
+## Step 2 — Install Openclaw
+
+`openclaw` is published to npm. Install it globally — no git clone or build required:
+
+```bash
+npm install -g openclaw
+```
+
+Verify:
+
+```bash
+openclaw --help
+```
+
+---
+
+## Step 3 — Apply the apex preset
+
+The built-in preset is `apex` (not `developer`). Use the `install` shortcut:
+
+```bash
+./dist/oh-my-openclaw install
+```
+
+Then fix any config migration warnings automatically:
+
+```bash
+openclaw doctor --fix
+```
+
+---
+
+## Step 4 — Register the messenger channel
+
+Use the info collected in Step 1.
+
+### Telegram
+```bash
+openclaw plugins enable telegram
+openclaw channels add --channel telegram --token "<token>"
+```
+
+### Discord
+```bash
+openclaw plugins enable discord
+openclaw channels add --channel discord --token "<token>"
+```
+
+### WhatsApp
+```bash
+openclaw channels login --channel whatsapp
+# Follow the QR code prompt
+```
+
+### No messenger
+Skip this step. The user can add a channel later with `openclaw channels add`.
+
+---
+
+## Step 5 — Configure the AI provider
+
+Use the info collected in Step 1.
+
+| Provider | Config command |
+|----------|---------------|
+| Anthropic | `openclaw config set agents.defaults.model.primary anthropic/claude-sonnet-4-5` — reads `ANTHROPIC_API_KEY` from env automatically |
+| OpenAI | `openclaw config set agents.defaults.model.primary openai/gpt-4o` — reads `OPENAI_API_KEY` from env |
+| Gemini | `openclaw config set agents.defaults.model.primary google/gemini-2.0-flash` — reads `GEMINI_API_KEY` from env |
+
+If the user said `env`, no further action is needed — openclaw reads the standard env vars automatically.
+If the user provided an API key directly, set it with:
+
+```bash
+openclaw config set agents.list[0].auth.anthropic.apiKey "<key>"
+```
+
+(Replace `anthropic` and the path with the correct provider.)
+
+---
+
+## Step 6 — Set gateway mode and start
+
+```bash
+openclaw config set gateway.mode local
+openclaw gateway run &
+```
+
+Wait for this log line before proceeding:
+
+```
+[telegram] [default] starting provider (@<botname>)
+```
+
+Then confirm the gateway is healthy:
+
+```bash
+openclaw health
+```
+
+---
+
+## Step 7 — Handle the pairing code automatically
+
+When the user sends a message to the bot for the first time they will receive a pairing code like:
+
+```
+Pairing code: K5MKBJLH
+Ask the bot owner to approve with:
+  openclaw pairing approve telegram K5MKBJLH
+```
+
+Watch for it and approve immediately without waiting for the user to ask:
+
+```bash
+openclaw pairing approve telegram <CODE>
+```
+
+---
+
+## Step 8 — Error recovery
+
+If any command fails:
+1. Diagnose the cause (read the error, check `openclaw doctor`).
+2. Apply the minimal fix.
+3. Retry.
+4. Report exactly what was changed.
+
+Common issues:
+- `Unknown channel: telegram` → run `openclaw plugins enable telegram` first
+- `Preset not found` → use `./dist/oh-my-openclaw install` (not `apply developer`)
+- `Invalid config` migration warnings → run `openclaw doctor --fix`
+- `gateway.mode is unset` → run `openclaw config set gateway.mode local`
