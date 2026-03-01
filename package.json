@@ -1,6 +1,6 @@
 {
   "name": "oh-my-openclaw",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "type": "module",
   "description": "CLI tool for managing OpenClaw agent presets",
   "license": "MIT",
