@@ -102,6 +102,26 @@ export async function copyWorkspaceFiles(
   files: string[]
 ): Promise<void> {
   await fs.mkdir(destDir, { recursive: true });
+  const overwrittenFiles: string[] = [];
+
+  for (const filename of files) {
+    const dest = path.join(destDir, filename);
+    try {
+      await fs.access(dest);
+      overwrittenFiles.push(filename);
+    } catch (error) {
+      if (!isErrnoCode(error, 'ENOENT')) {
+        throw error;
+      }
+    }
+  }
+
+  if (overwrittenFiles.length > 0) {
+    console.warn(
+      `Warning: Overwriting existing workspace files: ${overwrittenFiles.join(', ')}`
+    );
+  }
+
   for (const filename of files) {
     const src = path.join(srcDir, filename);
     const dest = path.join(destDir, filename);

@@ -163,6 +163,41 @@ describe('copyWorkspaceFiles', () => {
       'identity'
     );
   });
+
+  test('warns when existing workspace files are overwritten', async () => {
+    const srcDir = path.join(tempDir, 'src');
+    const destDir = path.join(tempDir, 'dest');
+    const { mkdir } = await import('node:fs/promises');
+    await mkdir(srcDir, { recursive: true });
+    await mkdir(destDir, { recursive: true });
+
+    await writeFile(path.join(srcDir, 'AGENTS.md'), 'new agents');
+    await writeFile(path.join(srcDir, 'SOUL.md'), 'new soul');
+    await writeFile(path.join(destDir, 'AGENTS.md'), 'old agents');
+    await writeFile(path.join(destDir, 'SOUL.md'), 'old soul');
+
+    const warnings: string[] = [];
+    const originalWarn = console.warn;
+    console.warn = (...args: unknown[]) => {
+      warnings.push(args.map(String).join(' '));
+    };
+
+    try {
+      await copyWorkspaceFiles(srcDir, destDir, ['AGENTS.md', 'SOUL.md']);
+    } finally {
+      console.warn = originalWarn;
+    }
+
+    expect(warnings).toEqual([
+      'Warning: Overwriting existing workspace files: AGENTS.md, SOUL.md',
+    ]);
+    expect(await readFile(path.join(destDir, 'AGENTS.md'), 'utf8')).toBe(
+      'new agents'
+    );
+    expect(await readFile(path.join(destDir, 'SOUL.md'), 'utf8')).toBe(
+      'new soul'
+    );
+  });
 });
 
 describe('exportWorkspaceFiles', () => {
