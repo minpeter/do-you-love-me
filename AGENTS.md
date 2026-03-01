@@ -1,128 +1,110 @@
 # PROJECT KNOWLEDGE BASE
 
 **Generated:** 2026-03-01
-**Commit:** f504c1d
+**Commit:** de90b7a
 **Branch:** main
 
 ## OVERVIEW
 
-CLI tool for managing [OpenClaw](https://github.com/minpeter/openclaw) configuration presets. Bun + TypeScript + Commander.js. Provides 5 subcommands (`list`, `apply`, `export`, `diff`, `install`) to merge JSON5 config overrides and copy workspace markdown files (AGENTS.md, SOUL.md, etc.).
+Bun + TypeScript CLI for applying/exporting OpenClaw preset bundles. Runtime entry is `src/cli.ts` via Bun launcher (`bin/oh-my-openclaw.js`); compiled binary (`dist/oh-my-openclaw`) is the distribution path.
 
 ## STRUCTURE
 
 ```
 oh-my-openclaw/
-├── bin/oh-my-openclaw.js   # Bun shebang launcher (imports src/cli.ts directly)
+├── AGENTS.md                  # root policy + cross-module map
+├── bin/oh-my-openclaw.js      # Bun launcher; imports src/cli.ts directly
 ├── src/
-│   ├── cli.ts              # CLI entry — Commander program + 5 subcommands
-│   ├── commands/            # list, apply, export, diff, install implementations
-│   │   └── __tests__/       # Command-level tests
-│   ├── core/                # Shared logic (merge, backup, filter, config resolution)
-│   │   ├── remote.ts         # GitHub URL parsing, clone, and cache logic
-│   │   └── __tests__/       # Unit tests per core module
-│   └── presets/             # Built-in preset templates
-│       ├── index.ts         # Loads + caches built-in presets
-│       └── apex/            # preset.json5 + workspace markdown files
-│           └── skills/      # bundled skill directories (e.g., prompt-guard/)
-├── dist/                    # Build output (gitignored)
-└── .sisyphus/               # Build orchestration artifacts (internal)
+│   ├── cli.ts                 # Commander wiring for list/apply/export/diff/install
+│   ├── commands/              # user-facing command flows
+│   │   ├── AGENTS.md          # command-layer invariants and change checklist
+│   │   └── __tests__/         # command-level tests
+│   ├── core/                  # shared logic (merge, backup, path, filtering, remote)
+│   │   ├── AGENTS.md          # core invariants and module contracts
+│   │   └── __tests__/         # unit tests for each core module
+│   └── presets/
+│       ├── index.ts           # built-in preset loading
+│       └── apex/              # built-in preset payload (not project policy docs)
+├── .github/workflows/         # code-quality CI
+└── dist/                      # build artifacts (gitignored)
 ```
 
 ## WHERE TO LOOK
 
 | Task | Location | Notes |
 |------|----------|-------|
-| Add/modify CLI commands | `src/commands/` | Each file exports one async command function |
-| Change merge behavior | `src/core/merge.ts` | Deep merge with null-delete semantics |
-| Modify sensitive field filtering | `src/core/sensitive-filter.ts` | Glob-pattern matching on key paths |
-| Change config path resolution | `src/core/config-path.ts` | Env var overrides: `OPENCLAW_CONFIG_PATH` > `OPENCLAW_STATE_DIR` > `~/.openclaw/` |
-| Apply remote GitHub presets | `src/core/remote.ts` | `isGitHubRef()`, `parseGitHubRef()`, `cloneToCache()` |
-| Add workspace file types | `src/core/constants.ts` | `WORKSPACE_FILES` array |
-| Add built-in presets | `src/presets/` | Built-in is apex-only; use user presets (`~/.openclaw/oh-my-openclaw/presets/<name>/`) for sharing custom variants |
-| Deploy skills from presets | `src/core/skills.ts` | `copySkills()` copies preset `skills/` dirs to `~/.agents/skills/` |
-| Understand backup flow | `src/core/backup.ts` | Timestamped copies to `~/.openclaw/oh-my-openclaw/backups/` |
-| Read/write JSON5 configs | `src/core/json5-utils.ts` | Wraps `json5` package with `ConfigSnapshot` type |
+| Add/modify CLI behavior | `src/cli.ts`, `src/commands/` | `install` is wired directly to `applyCommand('apex')` in `src/cli.ts` |
+| Change apply flow | `src/commands/apply.ts` | Preset resolution, backup/clean, merge, workspace/skills copy |
+| Change diff behavior | `src/commands/diff.ts` | Structural diff + workspace file add/replace reporting |
+| Change export behavior | `src/commands/export.ts` | Sensitive-field filtering + preset manifest write |
+| Change merge semantics | `src/core/merge.ts` | `null` deletes keys; arrays replace |
+| Change remote preset handling | `src/core/remote.ts` | GitHub ref parse + cache clone (`owner--repo`) |
+| Change config path resolution | `src/core/config-path.ts` | `OPENCLAW_CONFIG_PATH` > `OPENCLAW_STATE_DIR` > default |
+| Change workspace file policy | `src/core/constants.ts`, `src/core/workspace.ts` | Controlled by `WORKSPACE_FILES` and resolved workspace path |
+| Change preset loading/saving | `src/core/preset-loader.ts`, `src/presets/index.ts` | User presets override built-ins by name |
 
 ## CONVENTIONS
 
-- **Runtime**: Bun only. `#!/usr/bin/env bun` shebang. Types via `bun-types`.
-- **Imports**: `node:` prefix for built-ins (`node:path`, `node:fs/promises`). Relative paths only — no aliases, no `baseUrl`.
-- **Import order**: Built-in > external (`commander`, `picocolors`, `json5`) > internal. Not enforced by linter.
-- **Style**: Single quotes, semicolons, 2-space indent. Formatting/linting is enforced by Biome (`biome.jsonc`) with `ultracite/biome/core`.
-- **TypeScript**: `strict: true`, `target: ES2022`, `moduleResolution: bundler`.
-- **Config format**: JSON5 everywhere (not plain JSON). Use `readJson5`/`writeJson5` from `json5-utils.ts`.
-- **Error handling**: Avoid empty `catch {}`. For optional file operations, handle expected errors explicitly (e.g., `ENOENT`) and re-throw unknown errors.
-- **Console output**: `picocolors` for colored terminal output. `pc.bold()`, `pc.green()`, `pc.yellow()`, `pc.dim()`, `pc.red()`.
+- Runtime/tooling: Bun-only execution (`bun test`, `bun build`, `bun build --compile`).
+- Lint/format: Biome (`ultracite/biome/core`); single quotes enforced.
+- Type checking: strict TS (`strict: true`, `moduleResolution: bundler`, `types: ["bun-types"]`).
+- Imports: built-ins use `node:` prefix; relative internal imports (no path aliases).
+- Config format: JSON5 for read/write snapshots (`readJson5`, `writeJson5`).
+- Error handling: expected fs errors are handled explicitly (e.g., `ENOENT`), unknowns re-thrown.
 
 ## DEEP MERGE SEMANTICS (CRITICAL)
 
-The merge strategy in `src/core/merge.ts` has specific rules:
-
 | Override Value | Behavior |
-|---------------|----------|
-| **Object** | Recursive deep merge with base |
-| **Array** | Entirely replaces base array (NO append) |
-| **Scalar** | Overwrites base value |
-| **`null`** | **Deletes** the key from base |
-| **`undefined`** | Preserves base value (no-op) |
+|---|---|
+| Object | Recursive merge |
+| Array | Full replacement (no append) |
+| Scalar | Overwrite |
+| `null` | Delete key |
+| `undefined` | No-op (keep base value) |
 
-Inputs are never mutated — always returns new object.
+Implementation source: `src/core/merge.ts`.
 
 ## PRESET RESOLUTION ORDER
 
-0. Remote GitHub presets: if input matches `owner/repo` or GitHub URL → `isGitHubRef()` → clone → cache as user preset
-1. User presets: `~/.openclaw/oh-my-openclaw/presets/<name>/`
-2. Built-in presets: `src/presets/<name>/`
-3. User presets with same name **override** built-ins.
-4. Sensitive fields (`auth`, `env`, `meta`, `*.apiKey`, `*.botToken`, etc.) are **stripped** on export/diff.
-
-## APEX-ONLY PHILOSOPHY
-
-This repo manages exactly **ONE** built-in preset: **apex**.
-
-- Apex includes 100% of all capabilities (identity, tools, models, workspace files)
-- Other presets can be shared as user presets (e.g., `minpeter/demo-assistant`)
-- User presets go to `~/.openclaw/oh-my-openclaw/presets/<name>/`
-- Use `oh-my-openclaw install` to apply apex in one command
-- Remote presets can be applied directly from GitHub: `oh-my-openclaw apply owner/repo` or `oh-my-openclaw apply https://github.com/owner/repo`. They are cached as user presets at `~/.openclaw/oh-my-openclaw/presets/owner--repo/`. Use `--force` to re-download.
+0. GitHub ref (`owner/repo` or URL) -> clone/cache as user preset (`owner--repo`)
+1. User preset: `~/.openclaw/oh-my-openclaw/presets/<name>/`
+2. Built-in preset: `src/presets/<name>/`
+3. User preset with same name overrides built-in
 
 ## ANTI-PATTERNS
 
-- **Known MVP limitation**: Applying a preset to a JSON5 config **loses all comments**. Warning is printed at apply time.
-- No other explicit anti-pattern markers found in codebase.
+- Assuming JSON5 comments survive apply; they are dropped when config is rewritten.
+- Treating `null` like a regular scalar in preset config; it is delete semantics.
+- Expecting array append/merge behavior in preset config; arrays replace entirely.
+- Using `--clean` + `--no-backup` casually; this can remove current config/workspace with no backup.
 
 ## TEST PATTERNS
 
-- **Runner**: `bun test` (Bun's built-in test runner). No Jest/Vitest.
-- **Location**: Co-located `__tests__/` dirs next to source. Plus `src/__tests__/` for integration tests.
-- **Naming**: `<module>.test.ts` (never `.spec.ts`).
-- **Structure**: `describe('<module>')` + sentence-form `test('...')`.
-- **Fixtures**: No shared fixture dirs. Each test file creates temp dirs via `mkdtemp()` and cleans up in `afterEach`.
-- **Isolation**: Tests override `process.env.OPENCLAW_CONFIG_PATH` to temp paths. Restore original env in `afterEach`.
-- **CLI output capture**: Monkey-patch `console.log` to collect output strings, restore in `finally` block.
-- **Placeholder**: `src/__tests__/placeholder.test.ts` exists (smoke test, can be removed).
+- Runner: `bun test`.
+- Layout: `src/core/__tests__`, `src/commands/__tests__`, plus `src/__tests__/integration.test.ts`.
+- Naming: `*.test.ts` only.
+- Isolation: temp dirs + env override/reset per test file.
+- Output assertions: CLI tests monkey-patch `console.log` and restore in cleanup.
 
 ## COMMANDS
 
 ```bash
-bun install              # Install deps
-bun run lint             # Biome check (ultracite rules)
-bun run lint:fix         # Biome auto-fix/format
-bun run check            # Lint + typecheck
-bun test                 # Run all tests
-bun run typecheck        # tsc --noEmit
-bun run build            # ESM bundle → dist/cli.js
-bun run build:compile    # Native binary → dist/oh-my-openclaw
-bun run clean            # rm -rf dist
+bun install
+bun run check
+bun run check:biome
+bun run check:types
+bun test
+bun run build
+bun run build:compile
+bun run clean
 ```
 
 ## NOTES
 
-- `src/presets/*/AGENTS.md` and `SOUL.md` are **preset content files** (agent personas copied to user workspace). They are NOT project documentation.
-- `bin/oh-my-openclaw.js` imports `src/cli.ts` directly — requires Bun runtime, does not use `dist/`.
-- `package.json` has no `bin`/`main`/`exports` fields. CLI distribution is via compiled binary only.
-- CI workflow exists at `.github/workflows/code-quality.yml` and runs Biome, typecheck, test, and build on PR/push.
-- `build:compile` uses Bun's `--compile --bytecode` for single-file native binary.
-- Target filesystem: `~/.openclaw/` (config, workspace, presets, backups). After applying, user must manually run `openclaw gateway restart`.
-- Project policy: There are currently no real end users. For this machine-local environment, aggressive migrations and breaking updates are acceptable to eliminate legacy quickly.
-- Skills bundled in presets (`src/presets/<name>/skills/<skill-name>/`) are copied to `~/.agents/skills/<skill-name>/` when `apply` runs. Use `--force` to overwrite existing skills.
+- `src/presets/apex/AGENTS.md` is preset payload content, not repository policy guidance.
+- `bin/oh-my-openclaw.js` runs source (`src/cli.ts`) directly; Bun runtime is required for launcher path.
+- CI exists at `.github/workflows/code-quality.yml` and runs typecheck/lint/test/build.
+- `build:compile` output (`dist/oh-my-openclaw`) is the intended standalone executable.
+- `diff` is a structural comparison against raw preset config; `apply` filters sensitive paths before merge, so outputs are not strict apply previews.
+- Apply flow ends with a manual operational step: run `openclaw gateway restart`.
+- Project policy allows aggressive cleanup/migrations for this local-only environment.

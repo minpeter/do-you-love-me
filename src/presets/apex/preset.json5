@@ -3,7 +3,7 @@
   description: 'All-in-one power assistant preset with secure prompt-guard defaults',
   version: '1.0.0',
   author: 'oh-my-openclaw',
-  tags: ['all-in-one', 'security', 'developer', 'assistant', 'tmux', 'prompt-guard'],
+  tags: ['all-in-one', 'security', 'developer', 'assistant', 'tmux', 'prompt-guard', 'agent-browser'],
   builtin: true,
   config: {
     identity: {
@@ -53,5 +53,5 @@
     },
   },
   workspaceFiles: ['AGENTS.md', 'SOUL.md', 'USER.md', 'IDENTITY.md'],
-  skills: ['prompt-guard', 'tmux-opencode'],
+  skills: ['prompt-guard', 'tmux-opencode', 'agent-browser'],
 }
