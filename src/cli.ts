@@ -153,6 +153,7 @@ program
   .description('Upload workspace files to a GitHub repo as a preset')
   .argument('<github-repo>', 'GitHub repository (e.g., owner/repo)')
   .option('--create', 'Create the repository if it does not exist')
+  .option('--force', 'Force-push to main (dangerous: rewrites history)')
   .option('--private', 'Make the repository private (used with --create)')
   .option('--description <desc>', 'Repository description (used with --create)')
   .action(
@@ -160,6 +161,7 @@ program
       githubRepo: string,
       options: {
         create?: boolean;
+        force?: boolean;
         private?: boolean;
         description?: string;
       }
@@ -167,6 +169,7 @@ program
       try {
         await uploadCommand(githubRepo, {
           create: options.create,
+          force: options.force,
           private: options.private,
           description: options.description,
         });

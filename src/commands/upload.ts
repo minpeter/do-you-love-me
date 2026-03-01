@@ -17,6 +17,7 @@ import { listWorkspaceFiles, resolveWorkspaceDir } from '../core/workspace';
 interface UploadOptions {
   create?: boolean;
   description?: string;
+  force?: boolean;
   private?: boolean;
 }
 
@@ -193,7 +194,8 @@ export async function prepareStagingDir(
 async function pushToGitHub(
   stagingDir: string,
   owner: string,
-  repo: string
+  repo: string,
+  force?: boolean
 ): Promise<void> {
   const cwd = stagingDir;
 
@@ -227,11 +229,17 @@ async function pushToGitHub(
     { cwd }
   );
 
-  await execOrThrow(
-    ['git', 'push', '-u', 'origin', 'main', '--force'],
-    'Failed to push to GitHub',
-    { cwd }
-  );
+  await execOrThrow(buildPushCommand(force), 'Failed to push to GitHub', {
+    cwd,
+  });
+}
+
+export function buildPushCommand(force?: boolean): string[] {
+  const command = ['git', 'push', '-u', 'origin', 'main'];
+  if (force) {
+    command.push('--force');
+  }
+  return command;
 }
 
 export async function uploadCommand(
@@ -302,7 +310,7 @@ export async function uploadCommand(
 
   try {
     // Push to GitHub
-    await pushToGitHub(stagingDir, owner, repo);
+    await pushToGitHub(stagingDir, owner, repo, options.force);
   } finally {
     // Cleanup staging directory
     await fs.rm(stagingDir, { recursive: true, force: true }).catch(() => {

@@ -3,7 +3,12 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { buildManifest, parseRepo, prepareStagingDir } from '../upload';
+import {
+  buildManifest,
+  buildPushCommand,
+  parseRepo,
+  prepareStagingDir,
+} from '../upload';
 
 describe('upload: parseRepo', () => {
   test('parses owner/repo shorthand', () => {
@@ -81,6 +86,23 @@ describe('upload: buildManifest', () => {
     expect(manifest.name).toBe('empty');
     expect(manifest.config).toEqual({});
     expect(manifest.workspaceFiles).toEqual([]);
+  });
+});
+
+describe('upload: buildPushCommand', () => {
+  test('uses normal push by default', () => {
+    expect(buildPushCommand()).toEqual(['git', 'push', '-u', 'origin', 'main']);
+  });
+
+  test('adds force flag only when explicitly enabled', () => {
+    expect(buildPushCommand(true)).toEqual([
+      'git',
+      'push',
+      '-u',
+      'origin',
+      'main',
+      '--force',
+    ]);
   });
 });
 
@@ -271,7 +293,7 @@ describe('upload: uploadCommand error paths', () => {
 
   test('throws on invalid repo argument', async () => {
     const { uploadCommand } = await import('../upload');
-    await expect(uploadCommand('invalid-no-slash')).rejects.toThrow(
+    return expect(uploadCommand('invalid-no-slash')).rejects.toThrow(
       'Invalid GitHub repository'
     );
   });
