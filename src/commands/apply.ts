@@ -320,7 +320,9 @@ export async function applyCommand(
     }
   }
 
-  await fixNodePathIfNeeded();
+  if (process.platform === 'darwin') {
+    await fixNodePathIfNeeded();
+  }
 
   console.log(pc.green(`\nOK Preset '${preset.name}' applied.`));
   console.log(
