@@ -25,6 +25,14 @@
             },
           },
         },
+        tools: {
+          message: {
+            crossContext: {
+              allowAcrossProviders: true,
+              marker: { enabled: true, prefix: '[from {channel}] ' },
+            },
+          },
+        },
       },
     },
     tools: {
