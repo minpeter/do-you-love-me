@@ -8,18 +8,26 @@ apex is a CLI utility for managing configuration presets for [OpenClaw](https://
 ## Quick Start
 
 ### Installation
-Prerequisites: [Bun](https://bun.sh)
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   bun install
-   ```
-3. Build the binary:
-   ```bash
-   bun run build:compile
-   ```
-4. Add the resulting binary in `dist/apex` to your PATH or run it directly.
+1. Clone the repository:
+```bash
+   git clone https://github.com/minpeter/apex.git
+   cd apex
+```
+
+2. Copy the contents of `setup.md` and paste it directly into your preferred AI coding agent:
+   - [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
+   - [OpenCode](https://github.com/nicepkg/opencode)
+   - [Codex](https://github.com/openai/codex)
+   - Or any other coding agent
+
+   The agent will handle dependency installation, building, and initial configuration automatically.
+```bash
+   # Example: using Claude Code
+   cat setup.md | claude
+```
+
+> **Note**: [Bun](https://bun.sh) is required as a prerequisite. Make sure it's installed before running setup.
 
 ### Basic Workflow
 1. **List** available presets: `apex list`
