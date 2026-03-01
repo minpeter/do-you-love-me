@@ -245,7 +245,7 @@ export async function uploadCommand(
   await checkGhAuth();
 
   // Resolve local paths
-  const paths = resolveOpenClawPaths();
+  const paths = await resolveOpenClawPaths();
   const currentConfig = await readCurrentConfig(paths.configPath);
   const workspaceDir = resolveWorkspaceDir(currentConfig, paths.stateDir);
 

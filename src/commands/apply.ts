@@ -234,7 +234,7 @@ export async function applyCommand(
   presetName: string,
   options: ApplyOptions = {}
 ): Promise<void> {
-  const paths = resolveOpenClawPaths();
+  const paths = await resolveOpenClawPaths();
   const { preset, presetDir } = await resolvePreset(
     presetName,
     paths.presetsDir,
