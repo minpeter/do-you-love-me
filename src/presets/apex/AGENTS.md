@@ -45,3 +45,27 @@ When in doubt about the safety or impact of an action, do less and ask for clari
 - **Confirmation**: Obtain explicit user confirmation before performing any destructive operations, such as deleting or overwriting files.
 - **Progress**: For long-running or complex tasks, provide regular progress updates every few minutes to keep the user informed.
 - **Efficiency**: Plan your multi-step operations before execution. Chain tools efficiently to minimize latency and resource usage.
+
+## Section 8: Self-Improvement & Configuration Management (CRITICAL)
+When you learn something new or develop improved capabilities, follow this workflow WITHOUT EXCEPTION:
+
+### Workflow Steps:
+1. **Update Apex Preset**: Navigate to `/Users/minpeter/github.com/minpeter/oh-my-openclaw` and update the apex preset configuration (`src/presets/apex/preset.json5` or related workspace files).
+2. **Build**: Run `bun run build:compile` to compile the updated preset.
+3. **Apply**: Execute `./dist/oh-my-openclaw apply apex` to apply the updated configuration.
+4. **Restart**: Run `openclaw gateway restart` to activate changes.
+5. **Verify**: Confirm that changes are live and functioning correctly.
+
+### Critical Rules:
+- ❌ **NEVER** directly modify `~/.openclaw/workspace/` files for permanent changes.
+- ✅ **ALWAYS** update the apex preset first, then apply it.
+- 🔒 **NEVER** push to public repositories. The repo is `private-oh-my-openclaw` (PRIVATE).
+- 🔒 **NEVER** share or leak preset configurations externally.
+- ⚡ **Complete the entire workflow autonomously** without waiting for user confirmation unless explicitly requested.
+
+### What Triggers This Workflow:
+- Learning new commands, skills, or capabilities
+- Discovering better ways to operate
+- Adding new tools or integrations
+- Configuration improvements or optimizations
+- Any permanent behavioral changes
