@@ -187,4 +187,30 @@ describe('migrateLegacyKeys', () => {
     expect(agentsList[0]).toEqual({ id: 'main', identity: { name: 'Bot' } });
     expect(agentsList[1]).toEqual({ id: 'valid', model: 'gpt-4' });
   });
+
+  test('handles non-serializable values via clone fallback', () => {
+    const config = {
+      identity: { name: 'Bot' },
+      meta: { version: 1n, onApply: () => 'done' },
+      agents: {
+        defaults: {},
+        list: [{ id: 'main', model: 'gpt-4' }],
+      },
+    };
+
+    const result = migrateLegacyKeys(
+      config as unknown as Record<string, unknown>
+    );
+
+    const migratedAgents = result.config.agents as Record<string, unknown>;
+    const agentsList = migratedAgents.list as Record<string, unknown>[];
+    const meta = result.config.meta as Record<string, unknown>;
+
+    expect(agentsList[0].identity).toEqual({ name: 'Bot' });
+    expect(meta.version).toBe(1n);
+    expect(meta.onApply).toBe(config.meta.onApply);
+    expect((config.agents.list[0] as Record<string, unknown>).identity).toBe(
+      undefined
+    );
+  });
 });

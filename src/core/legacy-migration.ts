@@ -14,6 +14,51 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function deepCloneFallback(
+  value: unknown,
+  seen: WeakMap<object, unknown> = new WeakMap()
+): unknown {
+  if (Array.isArray(value)) {
+    if (seen.has(value)) {
+      return seen.get(value);
+    }
+
+    const clone: unknown[] = [];
+    seen.set(value, clone);
+
+    for (const item of value) {
+      clone.push(deepCloneFallback(item, seen));
+    }
+
+    return clone;
+  }
+
+  if (isPlainObject(value)) {
+    if (seen.has(value)) {
+      return seen.get(value);
+    }
+
+    const clone: Record<string, unknown> = {};
+    seen.set(value, clone);
+
+    for (const [key, nestedValue] of Object.entries(value)) {
+      clone[key] = deepCloneFallback(nestedValue, seen);
+    }
+
+    return clone;
+  }
+
+  return value;
+}
+
+function safeDeepClone<T>(value: T): T {
+  try {
+    return JSON.parse(JSON.stringify(value)) as T;
+  } catch {
+    return deepCloneFallback(value) as T;
+  }
+}
+
 interface MigrationResult {
   applied: string[];
   config: Record<string, unknown>;
@@ -26,7 +71,7 @@ interface MigrationResult {
 export function migrateLegacyKeys(
   config: Record<string, unknown>
 ): MigrationResult {
-  let result: Record<string, unknown> = structuredClone(config);
+  let result: Record<string, unknown> = safeDeepClone(config);
   const applied: string[] = [];
 
   // identity → agents.list[].identity
