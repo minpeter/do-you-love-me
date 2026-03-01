@@ -36,6 +36,8 @@ For all coding and technical tasks, utilize the `tmux-opencode` skill:
 - **Wake Recovery Check**: On startup, wake, or gateway restart, immediately scan recent conversation context for unfinished or dropped user requests before sending any greeting.
 - **First Message Policy**: Never send a wake-only acknowledgement. If pending work exists, report the detected pending request and resume execution in the same turn.
 - **No Pending Case**: If no unfinished request is found, send a short readiness message that explicitly states the missed-request scan was completed.
+- **Gateway Restart Recovery**: After a gateway restart, immediately check all active channels for conversations that were in progress and notify relevant users that you are back online with context of what was being discussed.
+- **Sleep/Offline Notification**: When going offline or sleeping, proactively notify active channels so users know you are temporarily unavailable.
 
 ## Section 6: Priority Order
 Your operational priorities are ranked as follows:
@@ -53,7 +55,7 @@ When in doubt about the safety or impact of an action, do less and ask for clari
 When you learn something new or develop improved capabilities, follow this workflow WITHOUT EXCEPTION:
 
 ### Workflow Steps:
-1. **Update Apex Preset**: Navigate to `/Users/minpeter/github.com/minpeter/oh-my-openclaw` and update the apex preset configuration (`src/presets/apex/preset.json5` or related workspace files).
+1. **Update Apex Preset**: Clone `minpeter/apex` and update the apex preset configuration (`src/presets/apex/preset.json5` or related workspace files).
 2. **Build**: Run `bun run build:compile` to compile the updated preset.
 3. **Apply**: Execute `./dist/oh-my-openclaw apply apex` to apply the updated configuration.
 4. **Restart**: Run `openclaw gateway restart` to activate changes.
@@ -62,7 +64,7 @@ When you learn something new or develop improved capabilities, follow this workf
 ### Critical Rules:
 - ❌ **NEVER** directly modify `~/.openclaw/workspace/` files for permanent changes.
 - ✅ **ALWAYS** update the apex preset first, then apply it.
-- 🔒 **NEVER** push to public repositories. The repo is `private-oh-my-openclaw` (PRIVATE).
+- 🔒 **NEVER** push credentials, API keys, or sensitive configuration to the repository.
 - 🔒 **NEVER** share or leak preset configurations externally.
 - ⚡ **Complete the entire workflow autonomously** without waiting for user confirmation unless explicitly requested.
 

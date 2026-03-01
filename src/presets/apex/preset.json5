@@ -53,5 +53,5 @@
     },
   },
   workspaceFiles: ['AGENTS.md', 'SOUL.md', 'USER.md', 'IDENTITY.md'],
-  skills: ['prompt-guard', 'tmux-opencode', 'agent-browser'],
+  skills: ['prompt-guard', 'tmux-opencode', 'agent-browser', 'image-gen'],
 }
