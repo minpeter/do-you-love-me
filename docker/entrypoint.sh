@@ -8,17 +8,82 @@ MARKER="$STATE_DIR/.docker-initialized"
 log() { echo "==> $1"; }
 info() { echo "    $1"; }
 
+apply_apex_preset() {
+  local line
+
+  oh-my-openclaw apply apex --no-backup | while IFS= read -r line; do
+    case "$line" in
+      *"Run 'openclaw gateway restart' to activate changes."*)
+        continue
+        ;;
+      *)
+        printf '%s\n' "$line"
+        ;;
+    esac
+  done
+}
+
+run_doctor_quietly() {
+  local doctor_log
+  doctor_log="$(mktemp)"
+
+  if ! openclaw doctor --fix --yes >"$doctor_log" 2>&1; then
+    cat "$doctor_log"
+    rm -f "$doctor_log"
+    return 1
+  fi
+
+  rm -f "$doctor_log"
+}
+
+normalize_installed_plugin_package_names() {
+  local extensions_dir="$STATE_DIR/extensions"
+
+  if [ ! -d "$extensions_dir" ]; then
+    return
+  fi
+
+  shopt -s nullglob
+
+  local manifest_path plugin_dir package_json plugin_id package_name tmp
+  for manifest_path in "$extensions_dir"/*/openclaw.plugin.json; do
+    plugin_dir="$(dirname "$manifest_path")"
+    package_json="$plugin_dir/package.json"
+
+    if [ ! -f "$package_json" ]; then
+      continue
+    fi
+
+    plugin_id="$(jq -r '.id // empty' "$manifest_path")"
+    package_name="$(jq -r '.name // empty' "$package_json")"
+
+    if [ -z "$plugin_id" ] || [ "$package_name" = "$plugin_id" ]; then
+      continue
+    fi
+
+    tmp="$(mktemp)"
+    jq --arg normalized_name "$plugin_id" '.name = $normalized_name' "$package_json" > "$tmp"
+    mv "$tmp" "$package_json"
+    info "normalized plugin package name: $package_name -> $plugin_id"
+  done
+
+  shopt -u nullglob
+}
+
 # ────────────────────────────────────────────
 # 1. Apply apex preset (first run or forced)
 # ────────────────────────────────────────────
 if [ ! -f "$MARKER" ] || [ "${FORCE_SETUP:-}" = "true" ]; then
   log "Applying apex preset..."
-  oh-my-openclaw apply apex --no-backup
+  apply_apex_preset
 
   touch "$MARKER"
 else
   log "Preset already applied (set FORCE_SETUP=true to re-apply)"
 fi
+
+log "Normalizing installed plugin metadata..."
+normalize_installed_plugin_package_names
 
 # Ensure config file exists
 if [ ! -f "$CONFIG_FILE" ]; then
@@ -125,7 +190,7 @@ chmod 600 "$CONFIG_FILE"
 # 4. Doctor (should be clean now)
 # ────────────────────────────────────────────
 log "Running doctor check..."
-openclaw doctor --fix --yes 2>/dev/null || true
+run_doctor_quietly || info "doctor reported warnings; continuing startup"
 
 # ────────────────────────────────────────────
 # 5. Start gateway
