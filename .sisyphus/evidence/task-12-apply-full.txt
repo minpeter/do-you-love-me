@@ -1,0 +1,6 @@
+Backup created: /tmp/omo-test-apply/.openclaw/oh-my-openclaw/backups/openclaw.json.2026-02-28T17-11-12-713Z.bak
+Warning: JSON5 comments in your config will be lost (known MVP limitation).
+OK Workspace files copied: AGENTS.md, SOUL.md
+
+OK Preset 'developer' applied.
+Run 'openclaw gateway restart' to activate changes.

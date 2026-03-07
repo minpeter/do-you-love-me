@@ -1,0 +1,9 @@
+bun test v1.3.9 (cf6cdbbb)
+$ tsc --noEmit
+bun test v1.3.9 (cf6cdbbb)
+
+ 1 pass
+ 0 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [6.00ms]
+$ tsc --noEmit

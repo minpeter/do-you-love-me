@@ -1,0 +1,26 @@
+$ bun build src/cli.ts --compile --bytecode --outfile dist/oh-my-openclaw
+  [67ms]  bundle  24 modules
+ [107ms] compile  dist/oh-my-openclaw
+---
+1.0.0
+---
+Available presets:
+
+  default [builtin]
+    Clean default OpenClaw configuration (default, minimal)
+    v1.0.0
+
+  developer [builtin]
+    Full-stack developer setup with elevated tools and coding-optimized model (coding, developer, elevated)
+    v1.0.0
+
+  researcher [builtin]
+    Research-focused setup with web tools and conservative model (research, web, conservative)
+    v1.0.0
+
+  creative [builtin]
+    Creative work setup with image generation and creative model selection (creative, image, art)
+    v1.0.0
+
+---
+-rwxr-xr-x@ 1 minpeter  staff    58M Mar  1 02:19 dist/oh-my-openclaw

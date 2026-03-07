@@ -1,0 +1,97 @@
+{
+  name: 'apex',
+  description: 'All-in-one power assistant preset with secure prompt-guard and memory recall defaults',
+  version: '1.0.0',
+  author: 'apex',
+  tags: ['all-in-one', 'security', 'developer', 'assistant', 'tmux', 'prompt-guard', 'agent-browser', 'memory', 'auto-recall'],
+  builtin: true,
+  openclawBootstrap: {
+    memoryIndex: true,
+  },
+  openclawPlugins: ['openclaw-memory-auto-recall'],
+  config: {
+    identity: {
+      name: 'Apex',
+      theme: 'all-in-one power assistant',
+      emoji: '⚡',
+    },
+    agents: {
+      defaults: {
+        model: {
+          primary: 'anthropic/claude-opus-4-6',
+        },
+        contextTokens: 700000,
+        models: {
+          'anthropic/claude-opus-4-6': {
+            params: {
+              context1m: true,
+              speed: 'fast',
+            },
+          },
+        },
+        // Remove legacy unsupported key if it exists in current user config.
+        tools: null,
+      },
+    },
+    tools: {
+      message: {
+        crossContext: {
+          allowAcrossProviders: true,
+          marker: { enabled: true, prefix: '[from {channel}] ' },
+        },
+      },
+      allow: [
+        'exec',
+        'process',
+        'read',
+        'write',
+        'edit',
+        'apply_patch',
+        // 'browser' — removed; use agent-browser CLI via exec instead
+        'web_search',
+        'web_fetch',
+        'cron',
+        'image',
+        'memory_search',
+        'memory_get',
+        'message',
+        'canvas',
+      ],
+    },
+    channels: {
+      discord: {
+        allowBots: true,
+        guilds: {
+          '*': {
+            requireMention: true,
+          },
+        },
+      },
+      telegram: {
+        groupPolicy: 'open',
+        groups: {
+          '*': {
+            requireMention: true,
+          },
+        },
+      },
+    },
+    plugins: {
+      allow: ['memory-core', 'memory-auto-recall'],
+      entries: {
+        'memory-auto-recall': {
+          enabled: true,
+          config: {
+            maxResults: 3,
+            minScore: 0.3,
+            minPromptLength: 10,
+          },
+        },
+      },
+    },
+    // Remove legacy unsupported root key if it exists in current user config.
+    routing: null,
+  },
+  workspaceFiles: ['AGENTS.md', 'SOUL.md', 'USER.md', 'IDENTITY.md'],
+  skills: ['prompt-guard', 'tmux-opencode', 'agent-browser'],
+}

@@ -1,0 +1,66 @@
+import { afterEach, describe, expect, test } from 'bun:test';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { resolveOpenClawPaths } from '../config-path';
+import { APEX_DIR } from '../constants';
+
+const originalEnv = { ...process.env };
+const tempDirs: string[] = [];
+
+afterEach(() => {
+  process.env = { ...originalEnv };
+
+  for (const dir of tempDirs.splice(0)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+describe('resolveOpenClawPaths', () => {
+  test('defaults to $HOME/.openclaw/openclaw.json', async () => {
+    Reflect.deleteProperty(process.env, 'OPENCLAW_CONFIG_PATH');
+    Reflect.deleteProperty(process.env, 'OPENCLAW_STATE_DIR');
+
+    const resolved = await resolveOpenClawPaths();
+
+    expect(resolved.configPath).toBe(
+      path.join(os.homedir(), '.openclaw', 'openclaw.json')
+    );
+    expect(resolved.stateDir).toBe(path.join(os.homedir(), '.openclaw'));
+  });
+
+  test('uses OPENCLAW_CONFIG_PATH when set', async () => {
+    process.env.OPENCLAW_CONFIG_PATH = '/tmp/custom.json';
+    Reflect.deleteProperty(process.env, 'OPENCLAW_STATE_DIR');
+
+    const resolved = await resolveOpenClawPaths();
+
+    expect(resolved.configPath).toBe('/tmp/custom.json');
+    expect(resolved.stateDir).toBe('/tmp');
+  });
+
+  test('uses OPENCLAW_STATE_DIR/openclaw.json when set', async () => {
+    process.env.OPENCLAW_STATE_DIR = '/tmp/state';
+    Reflect.deleteProperty(process.env, 'OPENCLAW_CONFIG_PATH');
+
+    const resolved = await resolveOpenClawPaths();
+
+    expect(resolved.stateDir).toBe('/tmp/state');
+    expect(resolved.configPath).toBe('/tmp/state/openclaw.json');
+  });
+
+  test('resolves presetsDir under stateDir/apex/presets', async () => {
+    const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openclaw-state-'));
+    tempDirs.push(stateDir);
+    process.env.OPENCLAW_STATE_DIR = stateDir;
+    Reflect.deleteProperty(process.env, 'OPENCLAW_CONFIG_PATH');
+
+    const resolved = await resolveOpenClawPaths();
+
+    expect(resolved.presetsDir).toBe(path.join(stateDir, APEX_DIR, 'presets'));
+    expect(resolved.backupsDir).toBe(path.join(stateDir, APEX_DIR, 'backups'));
+    expect(resolved.workspaceDir).toBe(path.join(stateDir, 'workspace'));
+    expect(fs.existsSync(resolved.presetsDir)).toBe(true);
+    expect(fs.existsSync(resolved.backupsDir)).toBe(true);
+  });
+});

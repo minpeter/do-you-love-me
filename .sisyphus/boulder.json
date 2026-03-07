@@ -1,0 +1,10 @@
+{
+  "active_plan": "/Users/minpeter/github.com/minpeter/oh-my-openclaw/.sisyphus/plans/skill-deploy.md",
+  "started_at": "2026-03-01T01:51:54.271Z",
+  "session_ids": [
+    "ses_35a8dbcefffeZB10zOqubW32FJ"
+  ],
+  "plan_name": "skill-deploy",
+  "agent": "atlas",
+  "worktree_path": "/Users/minpeter/github.com/minpeter/oh-my-openclaw-skill-deploy"
+}
