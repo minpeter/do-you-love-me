@@ -1,8 +1,7 @@
 services:
   openclaw:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    image: ${OPENCLAW_IMAGE:-ghcr.io/minpeter/oh-my-openclaw:latest}
+    pull_policy: always
     ports:
       - "${OPENCLAW_GATEWAY_PORT:-18789}:${OPENCLAW_GATEWAY_PORT:-18789}"
     env_file: .env

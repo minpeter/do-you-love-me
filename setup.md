@@ -2,6 +2,18 @@
 
 Set up Openclaw so it is immediately ready to use.
 
+## Alternative — Docker Compose quick start
+
+If you prefer Docker, the default `docker-compose.yml` now pulls the prebuilt GHCR image instead of building locally.
+
+```bash
+cp .env.example .env
+docker compose up -d
+docker compose logs -f openclaw
+```
+
+To pin a specific published image instead of `latest`, set `OPENCLAW_IMAGE` in `.env` before starting Compose.
+
 ## Step 1 — Gather all required information upfront
 
 Before doing anything else, use the `AskUserQuestion` tool to collect all configuration interactively. The user should never have to type free-form prompts for selection-based questions — always present choices as selectable options.

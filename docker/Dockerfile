@@ -11,6 +11,10 @@ RUN bun run build:compile
 # ── Stage 2: Runtime ──
 FROM node:22-slim
 
+LABEL org.opencontainers.image.source="https://github.com/minpeter/oh-my-openclaw"
+LABEL org.opencontainers.image.description="Prebuilt OpenClaw runtime with oh-my-openclaw apex preset bootstrap"
+LABEL org.opencontainers.image.licenses="MIT"
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl unzip jq git ca-certificates lsof openssl \
     && rm -rf /var/lib/apt/lists/*
