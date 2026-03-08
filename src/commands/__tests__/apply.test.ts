@@ -877,6 +877,8 @@ describe('applyCommand', () => {
     expect(config).toHaveProperty('agents.defaults.heartbeat', {
       every: '5m',
       target: 'last',
+      prompt:
+        'Read HEARTBEAT.md if it exists and follow it strictly. OpenClaw heartbeat is already the runtime wake-up loop, and this Apex preset is configured for every=5m with target=last. Use each tick to proactively surface the single most useful update, reminder, unblock, or check-in for the current context. If nothing user-facing is worth sending right now, reply HEARTBEAT_OK.',
     });
 
     const heartbeatPath = path.join(env.workspaceDir, 'HEARTBEAT.md');
@@ -884,8 +886,8 @@ describe('applyCommand', () => {
 
     const heartbeat = await fs.readFile(heartbeatPath, 'utf-8');
     expect(heartbeat).toContain('# Heartbeat');
-    expect(heartbeat).toContain('heartbeat test');
-    expect(heartbeat).toContain('runtime heartbeat cadence');
+    expect(heartbeat).toContain('OpenClaw already provides the timer');
+    expect(heartbeat).toContain('Default to proactive usefulness');
   });
 
   test('apex apply copies MEMORY.md into workspace', async () => {

@@ -89,6 +89,8 @@ describe('apex preset', () => {
     expect(preset.config).toHaveProperty('agents.defaults.heartbeat', {
       every: '5m',
       target: 'last',
+      prompt:
+        'Read HEARTBEAT.md if it exists and follow it strictly. OpenClaw heartbeat is already the runtime wake-up loop, and this Apex preset is configured for every=5m with target=last. Use each tick to proactively surface the single most useful update, reminder, unblock, or check-in for the current context. If nothing user-facing is worth sending right now, reply HEARTBEAT_OK.',
     });
     expect(preset.config).toHaveProperty('tools');
     expect(preset.config).toHaveProperty('tools.allow', [
