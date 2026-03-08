@@ -44,16 +44,18 @@ describe('apex preset', () => {
     expect(preset.description.toLowerCase()).toMatch(APEX_DESCRIPTION_PATTERN);
   });
 
-  test('includes exactly four workspace files in expected order', async () => {
+  test('includes exactly six workspace files in expected order', async () => {
     const preset = await loadPreset(path.join(__dirname, '..', 'apex'));
 
     expect(preset.workspaceFiles).toEqual([
       'AGENTS.md',
+      'MEMORY.md',
       'SOUL.md',
       'USER.md',
       'IDENTITY.md',
+      'HEARTBEAT.md',
     ]);
-    expect(preset.workspaceFiles).toHaveLength(4);
+    expect(preset.workspaceFiles).toHaveLength(6);
   });
 
   test('includes required skills', async () => {
@@ -84,7 +86,25 @@ describe('apex preset', () => {
     expect(preset.config).toBeDefined();
     expect(preset.config).toHaveProperty('identity');
     expect(preset.config).toHaveProperty('agents');
+    expect(preset.config).toHaveProperty('agents.defaults.heartbeat', {
+      every: '30m',
+      target: 'last',
+    });
     expect(preset.config).toHaveProperty('tools');
+    expect(preset.config).toHaveProperty('tools.allow', [
+      'exec',
+      'process',
+      'read',
+      'write',
+      'edit',
+      'web_search',
+      'web_fetch',
+      'image',
+      'memory_search',
+      'memory_get',
+      'message',
+      'canvas',
+    ]);
     expect(preset.config).toHaveProperty('plugins.allow', [
       'memory-core',
       'memory-auto-recall',

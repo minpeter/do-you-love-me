@@ -20,6 +20,10 @@
         model: {
           primary: 'anthropic/claude-opus-4-6',
         },
+        heartbeat: {
+          every: '30m',
+          target: 'last',
+        },
         contextTokens: 700000,
         models: {
           'anthropic/claude-opus-4-6': {
@@ -46,11 +50,9 @@
         'read',
         'write',
         'edit',
-        'apply_patch',
         // 'browser' — removed; use agent-browser CLI via exec instead
         'web_search',
         'web_fetch',
-        'cron',
         'image',
         'memory_search',
         'memory_get',
@@ -92,6 +94,6 @@
     // Remove legacy unsupported root key if it exists in current user config.
     routing: null,
   },
-  workspaceFiles: ['AGENTS.md', 'SOUL.md', 'USER.md', 'IDENTITY.md'],
+  workspaceFiles: ['AGENTS.md', 'MEMORY.md', 'SOUL.md', 'USER.md', 'IDENTITY.md', 'HEARTBEAT.md'],
   skills: ['prompt-guard', 'tmux-opencode', 'agent-browser'],
 }
