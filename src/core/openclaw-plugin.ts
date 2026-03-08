@@ -1,4 +1,6 @@
 import { spawn } from 'node:child_process';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 const ALREADY_INSTALLED_PATTERN = /plugin already exists:/i;
 const INVALID_PLUGIN_NAME_PATTERN = /\s/;
@@ -74,6 +76,58 @@ export function setOpenClawCommandExecutorForTests(
   executor?: OpenClawCommandExecutor
 ): void {
   commandExecutor = executor ?? execCommand;
+}
+
+export async function normalizeInstalledPluginPackageNames(
+  stateDir: string
+): Promise<void> {
+  const extensionsDir = path.join(stateDir, 'extensions');
+
+  let extensionEntries: string[];
+  try {
+    extensionEntries = await fs.readdir(extensionsDir);
+  } catch (error) {
+    if (isErrnoCode(error, 'ENOENT')) {
+      return;
+    }
+
+    throw error;
+  }
+
+  for (const extensionEntry of extensionEntries) {
+    const pluginDir = path.join(extensionsDir, extensionEntry);
+    const manifestPath = path.join(pluginDir, 'openclaw.plugin.json');
+    const packageJsonPath = path.join(pluginDir, 'package.json');
+
+    let pluginId: string | undefined;
+    let packageName: string | undefined;
+
+    try {
+      const manifestRaw = await fs.readFile(manifestPath, 'utf-8');
+      const packageJsonRaw = await fs.readFile(packageJsonPath, 'utf-8');
+      pluginId = JSON.parse(manifestRaw).id as string | undefined;
+      packageName = JSON.parse(packageJsonRaw).name as string | undefined;
+    } catch (error) {
+      if (isErrnoCode(error, 'ENOENT')) {
+        continue;
+      }
+
+      throw error;
+    }
+
+    if (!(pluginId && packageName) || pluginId === packageName) {
+      continue;
+    }
+
+    const packageJsonRaw = await fs.readFile(packageJsonPath, 'utf-8');
+    const packageJson = JSON.parse(packageJsonRaw) as Record<string, unknown>;
+    packageJson.name = pluginId;
+    await fs.writeFile(
+      packageJsonPath,
+      `${JSON.stringify(packageJson, null, 2)}\n`,
+      'utf-8'
+    );
+  }
 }
 
 export async function installOpenClawPlugins(

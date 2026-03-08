@@ -18,6 +18,7 @@ import { migrateLegacyKeys } from '../core/legacy-migration';
 import { deepMerge } from '../core/merge';
 import {
   installOpenClawPlugins,
+  normalizeInstalledPluginPackageNames,
   runOpenClawMemoryIndex,
 } from '../core/openclaw-plugin';
 import { loadPreset } from '../core/preset-loader';
@@ -44,6 +45,10 @@ interface ApplyOptions {
 interface ResolvedPreset {
   preset: PresetManifest;
   presetDir: string;
+}
+
+function shouldSkipMemoryBootstrap(): boolean {
+  return process.env.OH_MY_OPENCLAW_SKIP_MEMORY_BOOTSTRAP === 'true';
 }
 
 function isPresetNotFoundError(error: unknown): boolean {
@@ -395,7 +400,8 @@ function printDryRunInfo(
 
 async function ensurePresetOpenClawPlugins(
   preset: PresetManifest,
-  verbose: boolean
+  verbose: boolean,
+  stateDir: string
 ): Promise<void> {
   if (hasPresetOpenClawPlugins(preset)) {
     logVerbose(
@@ -406,6 +412,7 @@ async function ensurePresetOpenClawPlugins(
       preset.openclawPlugins ?? []
     );
     if (ensuredPlugins.length > 0) {
+      await normalizeInstalledPluginPackageNames(stateDir);
       console.log(
         pc.green(`OK OpenClaw plugins ready: ${ensuredPlugins.join(', ')}`)
       );
@@ -418,6 +425,11 @@ async function runPostApplyOpenClawBootstrap(
   verbose: boolean
 ): Promise<void> {
   if (!hasOpenClawMemoryBootstrap(preset)) {
+    return;
+  }
+
+  if (shouldSkipMemoryBootstrap()) {
+    logVerbose(verbose, 'Skipping OpenClaw memory index bootstrap');
     return;
   }
 
@@ -507,7 +519,7 @@ export async function applyCommand(
     );
   }
 
-  await ensurePresetOpenClawPlugins(preset, verbose);
+  await ensurePresetOpenClawPlugins(preset, verbose, paths.stateDir);
 
   const postBootstrapSnapshot = await loadCurrentConfig(paths.configPath);
   currentConfig = postBootstrapSnapshot.config;

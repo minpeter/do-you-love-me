@@ -291,6 +291,22 @@ describe('applyCommand', () => {
         command.join(' ') ===
         'openclaw plugins install openclaw-memory-auto-recall'
       ) {
+        const installDir = path.join(
+          env.stateDir,
+          'extensions',
+          'memory-auto-recall'
+        );
+        await fs.mkdir(installDir, { recursive: true });
+        await fs.writeFile(
+          path.join(installDir, 'openclaw.plugin.json'),
+          JSON.stringify({ id: 'memory-auto-recall' }),
+          'utf-8'
+        );
+        await fs.writeFile(
+          path.join(installDir, 'package.json'),
+          JSON.stringify({ name: 'openclaw-memory-auto-recall' }),
+          'utf-8'
+        );
         await writeConfig(env.configPath, {
           plugins: {
             installs: {
@@ -351,6 +367,19 @@ describe('applyCommand', () => {
         )[0].identity as Record<string, unknown>
       ).name
     ).toBe('PluginEnabled');
+
+    const normalizedPackage = JSON.parse(
+      await fs.readFile(
+        path.join(
+          env.stateDir,
+          'extensions',
+          'memory-auto-recall',
+          'package.json'
+        ),
+        'utf-8'
+      )
+    ) as { name: string };
+    expect(normalizedPackage.name).toBe('memory-auto-recall');
   });
 
   test('clean apply preserves plugin install state after cleanup', async () => {
@@ -835,6 +864,73 @@ describe('applyCommand', () => {
         )[0].identity as Record<string, unknown>
       ).theme
     ).toBe('all-in-one power assistant');
+  });
+
+  test('apex apply copies HEARTBEAT.md into workspace', async () => {
+    const env = await createTempEnv('openclaw-apply-heartbeat-');
+
+    await writeConfig(env.configPath, { identity: { name: 'HeartbeatBase' } });
+
+    await applyCommand('apex', { noBackup: true });
+
+    const config = await readConfig(env.configPath);
+    expect(config).toHaveProperty('agents.defaults.heartbeat', {
+      every: '30m',
+      target: 'last',
+    });
+
+    const heartbeatPath = path.join(env.workspaceDir, 'HEARTBEAT.md');
+    expect(await fileExists(heartbeatPath)).toBe(true);
+
+    const heartbeat = await fs.readFile(heartbeatPath, 'utf-8');
+    expect(heartbeat).toContain('# Heartbeat');
+    expect(heartbeat).toContain('heartbeat test');
+    expect(heartbeat).toContain('runtime heartbeat cadence');
+  });
+
+  test('apex apply copies MEMORY.md into workspace', async () => {
+    const env = await createTempEnv('openclaw-apply-memory-');
+
+    await writeConfig(env.configPath, { identity: { name: 'MemoryBase' } });
+
+    await applyCommand('apex', { noBackup: true });
+
+    const memoryPath = path.join(env.workspaceDir, 'MEMORY.md');
+    expect(await fileExists(memoryPath)).toBe(true);
+
+    const memory = await fs.readFile(memoryPath, 'utf-8');
+    expect(memory).toContain('# Memory');
+    expect(memory).toContain('durable, long-term memory');
+    expect(memory).toContain('memory/YYYY-MM-DD.md');
+  });
+
+  test('skips memory bootstrap when entrypoint defers it', async () => {
+    const env = await createTempEnv('openclaw-apply-skip-memory-bootstrap-');
+    const commands: string[][] = [];
+
+    process.env.OH_MY_OPENCLAW_SKIP_MEMORY_BOOTSTRAP = 'true';
+
+    setOpenClawCommandExecutorForTests((command) => {
+      commands.push(command);
+      return Promise.resolve({
+        exitCode: 0,
+        stderr: '',
+        stdout: 'ok',
+      });
+    });
+
+    await writeConfig(env.configPath, {
+      identity: { name: 'SkipBootstrapBase' },
+    });
+
+    const logs = await captureLogs(async () => {
+      await applyCommand('apex', { noBackup: true });
+    });
+
+    expect(commands).toEqual([
+      ['openclaw', 'plugins', 'install', 'openclaw-memory-auto-recall'],
+    ]);
+    expect(logs.join('\n')).not.toContain('OK OpenClaw memory indexed.');
   });
 
   test('rejects invalid local preset names', async () => {
