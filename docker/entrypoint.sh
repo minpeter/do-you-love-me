@@ -299,7 +299,7 @@ jq \
   if $heartbeat_every != "" then
     .agents.defaults.heartbeat.every = $heartbeat_every
   elif ((.agents.defaults.heartbeat.every // "") | tostring) == "" then
-    .agents.defaults.heartbeat.every = "30m"
+    .agents.defaults.heartbeat.every = "5m"
   else . end |
   if $heartbeat_target != "" then
     .agents.defaults.heartbeat.target = $heartbeat_target
