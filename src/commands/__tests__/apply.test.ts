@@ -875,7 +875,7 @@ describe('applyCommand', () => {
 
     const config = await readConfig(env.configPath);
     expect(config).toHaveProperty('agents.defaults.heartbeat', {
-      every: '30m',
+      every: '5m',
       target: 'last',
     });
 

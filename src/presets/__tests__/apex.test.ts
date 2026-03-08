@@ -87,7 +87,7 @@ describe('apex preset', () => {
     expect(preset.config).toHaveProperty('identity');
     expect(preset.config).toHaveProperty('agents');
     expect(preset.config).toHaveProperty('agents.defaults.heartbeat', {
-      every: '30m',
+      every: '5m',
       target: 'last',
     });
     expect(preset.config).toHaveProperty('tools');

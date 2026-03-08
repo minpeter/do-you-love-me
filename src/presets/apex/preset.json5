@@ -21,7 +21,7 @@
           primary: 'anthropic/claude-opus-4-6',
         },
         heartbeat: {
-          every: '30m',
+          every: '5m',
           target: 'last',
         },
         contextTokens: 700000,
